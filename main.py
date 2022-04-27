@@ -86,7 +86,6 @@ def computations_real_1timestep(psi, tem, timeste):
     return psi
 
 
-
 @njit
 def tridiag_solver_from3vectors(d, c, a, b):
     # Uses the Thomas Algorithm for the inversion of a tridiagonal matrix
@@ -129,7 +128,7 @@ def E_field(timestep):
 
 @njit
 def E_time_profile(timestep):
-    return np.float64(1.0)
+    return np.sin(gl.omega*timestep + gl.phi0)
 
 @njit
 def solve_for_1_fixed_i_line_Voft_ON_trisolver(i, timestep, psi): # i represents the i-line we are solving for by calling this function: i=1 is the second vertical line

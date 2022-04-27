@@ -4,10 +4,11 @@ Energy_1s_au = np.float64(-0.5) # -13.6 eV in atomic units of energy
 m = np.float64(0.0) # magnetic Q number
 
 omega = np.float64(0.2) 
+phi0 = np.float64(0.0)
 E0 = np.float64(0.3)
 
 N_timesteps_imag = np.int32(100)
-N_timesteps = np.int32(500)
+N_timesteps = np.int32(300)
 
 # N_timesteps_test = 300
 # sigma_psi_squared_container = np.zeros((N_timesteps_test, ))
