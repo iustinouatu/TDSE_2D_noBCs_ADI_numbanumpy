@@ -35,9 +35,9 @@ def main():
         ground_state_pops[timestep+1] = get_ground_state_pop(psi[:, :, timestep+1], psi[:, :, 0])
 
 # End of computations
-    np.save("numbanpground_state_pops_over_time_deltaz{}_deltaepsilon{}_deltatime{}_timesteps{}_Nz{}_Nepsilon{}_E{}.npy".format(gl.delta_z, gl.delta_epsilon, gl.delta_time, gl.N_timesteps, gl.N_z_divs, gl.N_epsilon_divs, gl.E0), 
+    np.save("numbanp_ground_state_pops_over_time_deltaz{}_deltaepsilon{}_deltatime{}_timesteps{}_Nz{}_Nepsilon{}_E{}_env{}_phi0{}.npy".format(gl.delta_z, gl.delta_epsilon, gl.delta_time, gl.N_timesteps, gl.N_z_divs, gl.N_epsilon_divs, gl.E0, gl.enve, gl.phi0), 
             ground_state_pops)
-    np.save("numbanp_psi_realtimeprop_deltaz{}_deltaepsilon{}_deltatime{}_timesteps{}_Nz{}_Nepsilon{}_E{}.npy".format(gl.delta_z, gl.delta_epsilon, gl.delta_time, gl.N_timesteps, gl.N_z_divs, gl.N_epsilon_divs, gl.E0), 
+    np.save("numbanp_psi_realtimeprop_deltaz{}_deltaepsilon{}_deltatime{}_timesteps{}_Nz{}_Nepsilon{}_E{}_env{}_phi0{}.npy".format(gl.delta_z, gl.delta_epsilon, gl.delta_time, gl.N_timesteps, gl.N_z_divs, gl.N_epsilon_divs, gl.E0, gl.enve, gl.phi0), 
             psi)  
 # END main()
 
