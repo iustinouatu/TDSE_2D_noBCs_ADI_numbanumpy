@@ -110,16 +110,16 @@ def tridiag_solver_from3vectors(d, c, a, b):
 @njit
 def Voft(i, j, timestep, m):
     ii = i - gl.K/2
-    term1  = -gl.Z / sqrt((j*gl.delta_epsilon)**(2*gl.lambd) + (ii*gl.delta_z)**2) #  - 1 / sqrt(...)
+    term1  = -gl.Z / sqrt((j*gl.delta_epsilon)**(2*gl.lambd) + (ii*gl.delta_z)**2) #  - Z / sqrt(...)
     term2 = m**2 / ( 2*(j*gl.delta_epsilon)**(2*gl.lambd) )
-    term3 = (ii*gl.delta_z) * E_field(timestep) * sin(gl.omega*timestep*gl.delta_time)
+    term3 = (ii*gl.delta_z) * E_field(timestep) * sin(gl.omega*timestep*gl.delta_time + gl.phi0)
     return (term1 + term2 + term3)
 
 @njit
 def Voft_OFF_imag(i, j, m):
     # this is the same as Voft_OFF() above, because there is no modification due to the imag. time propagation (delta_time --> -1j*delta_time) appearing in Voft_OFF (as there is no E-field turned on)
     ii = i - gl.K/2
-    term1  = -gl.Z / sqrt(  (j*gl.delta_epsilon)**(2*gl.lambd) + (ii*gl.delta_z)**2  ) #  - 1 / sqrt(...)
+    term1  = -gl.Z / sqrt(  (j*gl.delta_epsilon)**(2*gl.lambd) + (ii*gl.delta_z)**2  ) #  - Z / sqrt(...)
     term2 = m**2 / ( 2*(j*gl.delta_epsilon)**(2*gl.lambd) )
     return (term1 + term2)
 
@@ -128,7 +128,7 @@ def E_field(timestep):
     return gl.E0 * E_time_profile(timestep)
 
 @njit
-def E_time_profile(timestep):
+def E_time_profile(timestep): # sin^2, gauss, square, etc...
     return np.float64(1.0)
 
 @njit
