@@ -5,10 +5,13 @@ m = np.float64(0.0) # magnetic Q number
 
 omega = np.float64(0.2) 
 phi0 = np.float64(0.0)
-enve = "sin(___)"
 E0 = np.float64(0.3)
+enve = "sinsq"
+N = np.int32(4)
+T = np.float64(N * (2*np.pi / omega))
 
-Z = 1
+
+Z = np.int32(1)
 
 N_timesteps_imag = np.int32(100)
 N_timesteps = np.int32(300)

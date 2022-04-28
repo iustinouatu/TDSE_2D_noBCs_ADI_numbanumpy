@@ -111,7 +111,7 @@ def Voft(i, j, timestep, m):
     ii = i - gl.K/2
     term1  = -gl.Z / sqrt((j*gl.delta_epsilon)**(2*gl.lambd) + (ii*gl.delta_z)**2) #  - Z / sqrt(...)
     term2 = m**2 / ( 2*(j*gl.delta_epsilon)**(2*gl.lambd) )
-    term3 = (ii*gl.delta_z) * E_field(timestep) * sin(gl.omega*timestep*gl.delta_time)
+    term3 = (ii*gl.delta_z) * E_field(timestep) * sin(gl.omega*timestep*gl.delta_time + gl.phi0)
     return (term1 + term2 + term3)
 
 @njit
@@ -123,12 +123,13 @@ def Voft_OFF_imag(i, j, m):
     return (term1 + term2)
 
 @njit
-def E_field(timestep):
-    return gl.E0 * E_time_profile(timestep)
+def E_field(timestep): # the non-fast oscillating part of the E-field of the laser
+    return gl.E0 * E_time_profile(timestep) # E_time_profile is not quickly oscillating (i.e. not oscillating at the light's frequency)
 
 @njit
-def E_time_profile(timestep):
-    return np.sin(gl.omega*timestep + gl.phi0)
+def E_time_profile(timestep): # sin^2, gauss, steplike, etc...
+    return np.sin( (np.pi/gl.T) * timestep * gl.delta_time)**2
+
 
 @njit
 def solve_for_1_fixed_i_line_Voft_ON_trisolver(i, timestep, psi): # i represents the i-line we are solving for by calling this function: i=1 is the second vertical line
