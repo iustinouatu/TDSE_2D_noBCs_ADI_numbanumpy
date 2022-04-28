@@ -8,6 +8,8 @@ phi0 = np.float64(0.0)
 enve = "sin(___)"
 E0 = np.float64(0.3)
 
+Z = 1
+
 N_timesteps_imag = np.int32(100)
 N_timesteps = np.int32(300)
 
