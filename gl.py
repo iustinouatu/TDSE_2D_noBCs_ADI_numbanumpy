@@ -6,6 +6,8 @@ m = np.float64(0.0) # magnetic Q number
 omega = np.float64(0.2) 
 E0 = np.float64(0.3)
 
+Z = 1
+
 N_timesteps_imag = np.int32(100)
 N_timesteps = np.int32(500)
 
