@@ -6,6 +6,7 @@ import gl
 
 def main():
     for Z in range(1, 55):
+        Z = np.int32(Z)
         for E0 in gl.E0_values:
             E0 = np.float64(E0)
 
