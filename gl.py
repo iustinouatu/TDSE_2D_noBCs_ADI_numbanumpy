@@ -3,9 +3,9 @@ import numpy as np
 Energy_1s_au = np.float64(-0.5) # -13.6 eV in atomic units of energy
 m = np.float64(0.0) # magnetic Q number
 
-omega = np.float64(0.2) 
+omega = np.float64(0.057) # light angular frequency omega = 0.057 atomic units => light optical period = 2.66 * 10^(-15) s corresponding to lambda (color) = 800nm 
 phi0 = np.float64(0.0)
-E0_values = np.linspace(0.01, 0.8, 200)
+E0_values = np.linspace(0.01, 0.8, 200) # for E < 0.05 ionization happens in the tunnel regime: Kostyukov 2018
 enve = "sinsq"
 N = np.int32(4)
 T = np.float64(N * (2*np.pi / omega))
