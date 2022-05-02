@@ -22,7 +22,7 @@ def main():
                 d["psi_0"] = renormalize_psi_ground(timestep, d["psi_0"])
                 rel_change_ampli = calculate_rel_change_in_psiground(timestep, d["psi_0"])
                 print(str(rel_change_ampli) + " for ground state ITP")
-            np.save("numbanp_psi_ground_n0_Z{}_imagiters{}_Nz{}_Nepsilon{}_deltaz{}_deltaepsilon{}_timestep{}.npy".format(#, gl.N_timesteps_imag, gl.N_z_divs, 
+            np.save("numbanp_psi_ground_n0_Z{}_imagiters{}_Nz{}_Nepsilon{}_deltaz{}_deltaepsilon{}_timestep{}.npy".format(Z, gl.N_timesteps_imag, gl.N_z_divs, 
                                                                                             gl.N_epsilon_divs, gl.delta_z, gl.delta_epsilon, gl.delta_time ), 
                     d["psi_0"])
             # drain out the contribution of previously calculated ground states from psi at t = 0 using the function ortho()
