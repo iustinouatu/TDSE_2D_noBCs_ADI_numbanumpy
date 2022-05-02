@@ -10,40 +10,60 @@ def main():
         for E0 in gl.E0_values:
             E0 = np.float64(E0)
 
+            d = dict()
+            for idx in range(gl.states):
+                d["psi_{}".format(idx)] = np.zeros((gl.N_z_divs+1, gl.N_epsilon_divs+1, gl.N_timesteps_imag+1), dtype=np.complex64)
+            
             temp = np.zeros((gl.N_z_divs+1, gl.N_epsilon_divs+1), dtype=np.complex64)
-            psi_ground = np.zeros((gl.N_z_divs+1, gl.N_epsilon_divs+1, gl.N_timesteps_imag+1), dtype=np.complex64)
-            psi_ground[:, :, 0] = populate_psi_ground_at_t0_for_imagtimeprop()
-
-        # Imaginary Time Propagation (ITP)
+            d["psi_0"][:, :, 0] = populate_psi_at_t0_for_imagtimeprop()
+        # Imaginary Time Propagation (ITP) to obtain the ground state wavefunction
             for timestep in range(0, gl.N_timesteps_imag):
-                psi_ground, temp = computations_imag_1timestep(psi_ground, temp, timestep, Z)
-                psi_ground = renormalize_psi_ground(timestep, psi_ground)
-                rel_change_ampli = calculate_rel_change_in_psiground(timestep, psi_ground)
-                print(rel_change_ampli)
-
-            np.save("numbanp_psi_ground_Z{}_imagiters{}_Nz{}_Nepsilon{}_deltaz{}_deltaepsilon{}_timestep{}.npy".format(Z, gl.N_timesteps_imag, gl.N_z_divs, 
+                d["psi_0"], temp = computations_imag_1timestep(d["psi_0"], temp, timestep, Z)
+                d["psi_0"] = renormalize_psi_ground(timestep, d["psi_0"])
+                rel_change_ampli = calculate_rel_change_in_psiground(timestep, d["psi_0"])
+                print(str(rel_change_ampli) + " for ground state ITP")
+            np.save("numbanp_psi_ground_n0_Z{}_imagiters{}_Nz{}_Nepsilon{}_deltaz{}_deltaepsilon{}_timestep{}.npy".format(#, gl.N_timesteps_imag, gl.N_z_divs, 
                                                                                             gl.N_epsilon_divs, gl.delta_z, gl.delta_epsilon, gl.delta_time ), 
-                    psi_ground)
-                    
+                    d["psi_0"])
+            # drain out the contribution of previously calculated ground states from psi at t = 0 using the function ortho()
+            for idx in range(1, gl.states):
+                temp = np.zeros((gl.N_z_divs+1, gl.N_epsilon_divs+1), dtype=np.complex64) # I believe one can work with temp from before, by simply overriding it and not defining it again.
+                keys = ['psi_{}'.format(bla) for bla in range(idx)]
+                d["psi_{}".format(idx)] = ortho([d.get(key) for key in keys][:, :, -1]) # if idx = 1, only d["psi_0"][:, :, -1] enters as argument
+            # ITP to obtain the idx-excited-state wavefunction
+                for timestep in range(0, gl.N_timesteps_imag):
+                    d["psi_{}".format(idx)], temp = computations_imag_1timestep(d["psi_{}".format(idx)], temp, timestep, Z)
+                    d["psi_{}".format(idx)] = renormalize_psi_ground(timestep, d["psi_{}".format(idx)])
+                    rel_change_ampli = calculate_rel_change_in_psiground(timestep, d["psi_{}".format(idx)])
+                    print(str(rel_change_ampli) + " for {}-excited state ITP".format(idx))
+                np.save("numbanp_psi_ground_n{}_Z{}_imagiters{}_Nz{}_Nepsilon{}_deltaz{}_deltaepsilon{}_timestep{}.npy".format(idx, Z, gl.N_timesteps_imag, gl.N_z_divs, 
+                                                                                            gl.N_epsilon_divs, gl.delta_z, gl.delta_epsilon, gl.delta_time ), 
+                        d["psi_{}".format(idx)])       
+
         # Real Time Propagation (RTP)
-            psi_start_for_realcomp = np.load("numbanp_psi_ground_Z{}_imagiters{}_Nz{}_Nepsilon{}_deltaz{}_deltaepsilon{}_timestep{}.npy".format(Z, gl.N_timesteps_imag, gl.N_z_divs, 
+            psi_start_for_realcomp = np.load("numbanp_psi_ground_n0_Z{}_imagiters{}_Nz{}_Nepsilon{}_deltaz{}_deltaepsilon{}_timestep{}.npy".format(Z, gl.N_timesteps_imag, gl.N_z_divs, 
                                                                                     gl.N_epsilon_divs, gl.delta_z, gl.delta_epsilon, gl.delta_time)
                                     )[:, :, -1]
 
             psi = np.zeros((gl.N_z_divs+1, gl.N_epsilon_divs+1, gl.N_timesteps+1), dtype=np.complex64)
             psi[:, :, 0] = psi_start_for_realcomp
-            ground_state_pops = np.zeros((gl.N_timesteps+1, ), dtype=np.float64)
-            ground_state_pops[0] = 1.0
-
+            states_pops = np.zeros((gl.N_timesteps+1, gl.states), dtype=np.float64)
+            states_pops[0, 0] = 1.0
+            states_psis_after_ITP = dict()
+            for idx in range(gl.states):
+                states_psis_after_ITP['psi_{}'.format(idx)] = np.load("numbanp_psi_ground_n{}_Z{}_imagiters{}_Nz{}_Nepsilon{}_deltaz{}_deltaepsilon{}_timestep{}.npy".format(idx, Z, gl.N_timesteps_imag, gl.N_z_divs, 
+                                                                                            gl.N_epsilon_divs, gl.delta_z, gl.delta_epsilon, gl.delta_time))
             for timestep in range(0, gl.N_timesteps):
                 psi = computations_real_1timestep(psi, temp, timestep, Z, E0)
-                ground_state_pops[timestep+1] = get_ground_state_pop(psi[:, :, timestep+1], psi[:, :, 0])
+                # states_pops[timestep+1, 0] = get_states_overlap(psi[:, :, timestep+1], psi[:, :, 0])
+                for idx in range(gl.states):
+                    states_pops[timestep+1, idx] = get_states_overlap(psi[:, :, timestep+1], states_psis_after_ITP['psi_{}'.format(idx)])
 
-        # End of computations
-            np.save("numbanp_ground_state_pops_over_time_Z{}_E0{}_deltaz{}_deltaepsilon{}_deltatime{}_timesteps{}_Nz{}_Nepsilon{}_env{}_phi0{}.npy".format(Z, E0, gl.delta_z, gl.delta_epsilon, gl.delta_time, gl.N_timesteps, gl.N_z_divs, gl.N_epsilon_divs, gl.enve, gl.phi0), 
-                    ground_state_pops)
-            np.save("numbanp_psi_realtimeprop_Z{}_E0{}_deltaz{}_deltaepsilon{}_deltatime{}_timesteps{}_Nz{}_Nepsilon{}_env{}_phi0{}.npy".format(Z, E0, gl.delta_z, gl.delta_epsilon, gl.delta_time, gl.N_timesteps, gl.N_z_divs, gl.N_epsilon_divs, gl.enve, gl.phi0), 
-                    psi)  
+        # End of RTP
+            np.save("numbanp_state_pops_over_time_Z{}_E0{}_deltaz{}_deltaepsilon{}_deltatime{}_timesteps{}_Nz{}_Nepsilon{}_env{}_phi0{}.npy".format(Z, E0, gl.delta_z, gl.delta_epsilon, gl.delta_time, gl.N_timesteps, gl.N_z_divs, gl.N_epsilon_divs, gl.enve, gl.phi0), 
+                    states_pops)
+            # np.save("numbanp_psi_realtimeprop_Z{}_E0{}_deltaz{}_deltaepsilon{}_deltatime{}_timesteps{}_Nz{}_Nepsilon{}_env{}_phi0{}.npy".format(Z, E0, gl.delta_z, gl.delta_epsilon, gl.delta_time, gl.N_timesteps, gl.N_z_divs, gl.N_epsilon_divs, gl.enve, gl.phi0), 
+            #        psi)  
 # END main()
 
 @njit
@@ -132,8 +152,18 @@ def E_field(timestep, E0): # the non-fast oscillating part of the E-field of the
     return E0 * E_time_profile(timestep) # E_time_profile is not quickly oscillating (i.e. not oscillating at the light's frequency)
 
 @njit
-def E_time_profile(timestep): # sin^2, gauss, steplike, etc...
-    return np.sin( (np.pi/gl.T) * timestep * gl.delta_time)**2
+def E_time_profile(timestep): # sin^2 or gauss. the oscillations at light's frequency (fast oscillations) are included in term3 as a multiplicative sin(gl.omega*timestep*gl.delta_time + gl.phi0).
+    time = timestep * gl.delta_time
+
+    if gl.enve == "gauss":
+        sigma = (gl.FWHM/2)**2 / np.log(2)
+        return np.exp(- (time - gl.center)**2 / sigma)
+
+    elif gl.enve == "sinsq":
+        return np.sin( (np.pi/gl.T) * time)**2
+
+    else:
+        raise NameError('This envelope is not implemented! Please choose from ["gauss", "sinsq"]!')
 
 
 @njit
@@ -270,7 +300,7 @@ def solve_for_1_fixed_j_line_imag_trisolver(j, timestep, temp, Z):
 
 ################################################################################################################################################################################
 # Utility functions
-def get_ground_state_pop(psi, psi_gr):
+def get_states_overlap(psi, psi_gr):
     # Calculates <psi_1s|psi>: int_int_{}^{} d_epsilon d_z of (psi_1s_dagger * psi)
     return np.abs(dot_product(psi_gr, psi))**2
 
@@ -280,6 +310,21 @@ def dot_product(psi_L, psi_R):
     tp = np.trapz( np.conj(psi_L)*psi_R,  gl.z_range, axis=0)
     res = np.trapz(tp, gl.epsilon_range, axis=0)
     return res
+
+def ortho(list_of_dictvalues):
+# list_of_dict values is like: [psi_0[:, :, -1], psi_1[:, :, -1], ...,]
+    how_many = len(list_of_dictvalues)
+    psi_t0 = populate_psi_at_t0_for_imagtimeprop() # shape (gl.N_z_divs+1, gl.N_epsilon_divs+1)
+    # do Modified Gram-Schmidt only for the psi_t0
+    dic = dict()
+    for j in range(how_many):
+        dic["PSI_{}".format(j)] = list_of_dictvalues[j] # copies beforehand
+
+    psi_t0 = psi_t0 / np.norm(psi_t0)
+    for k in range(how_many):
+        inner_prod = dot_product(psi_t0, dic['PSI_{}'.format(k)])
+        psi_t0 = psi_t0 - inner_prod * list_of_dictvalues[k]
+    return psi_t0
 
 def renormalize_psi_ground(timestep, psi_gr):
     tp = np.trapz(np.abs(psi_gr[:, :, timestep+1])**2, gl.z_range, axis=0) # tp (temporary storage) is shape (N_epsilon_divs, )
@@ -296,9 +341,8 @@ def calculate_rel_change_in_psiground(timestep, psi_gr):
     print("Bottom is: {}".format(bottom))
     return top / bottom
 
-
 @njit
-def populate_psi_ground_at_t0_for_imagtimeprop():
+def populate_psi_at_t0_for_imagtimeprop():
     psi_ground_at_t0 = np.zeros((gl.N_z_divs+1, gl.N_epsilon_divs+1), dtype=np.complex64)
 
     for c1 in range(1, psi_ground_at_t0.shape[0]-1):
